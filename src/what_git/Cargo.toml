@@ -1,0 +1,8 @@
+[package]
+name = "what_git"
+version = "0.5.0"
+authors = ["Aaron Sky <asky@wayfair.com>"]
+edition = "2018"
+
+[dependencies]
+reqwest = "0.9"

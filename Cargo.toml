@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "src/what_git",
+    "src/foxdie_services",
+    "src/foxdie_actions",
+    "src/foxdie",
+]
