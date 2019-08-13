@@ -1,0 +1,18 @@
+name: CI
+on:
+  - push
+  - pull_request
+jobs:
+  main:
+    steps:
+      - name: Lint
+        run: cargo fmt -- --check
+      - name: Clippy
+        run: cargo clippy -- -Dwarnings
+      - name: Test
+        run: cargo test
+    strategy:
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest

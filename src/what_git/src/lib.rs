@@ -128,7 +128,7 @@ fn metadata_for_url(url: &Url, token: &str) -> Result {
             verify_gitlab(&base_url_candidate, token),
         ) {
             (Ok(true), _) => {
-                base_url = base_url_candidate;
+                base_url = format!("{}/api/v3", base_url_candidate);
                 kind = SCMKind::GitHub;
             }
             (_, Ok(true)) => {
@@ -148,7 +148,7 @@ fn metadata_for_url(url: &Url, token: &str) -> Result {
 
 // Attempt to connect to the GitHub `/zen` endpoint, which is unique to GitHub's API.
 fn verify_github(base_url: &str, token: &str) -> result::Result<bool, reqwest::Error> {
-    let url = format!("{}/zen", base_url);
+    let url = format!("{}/api/v3/zen", base_url);
 
     Client::new()
         .get(&*url)

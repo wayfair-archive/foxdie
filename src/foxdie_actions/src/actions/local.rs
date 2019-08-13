@@ -19,7 +19,7 @@
 
 use crate::error::FoxdieError;
 use chrono::{DateTime, FixedOffset};
-use foxdie_services::{get_api_client_for_remote, git};
+use foxdie_services::{get_api_client_for_remote, git, PushRequestState};
 use log::{info, warn};
 use std::env;
 use std::path::Path;
@@ -66,7 +66,7 @@ fn clean_branches_on_remote(
     let current_local_branch = git::get_current_branch(&repository)?;
     let current_remote_branch = current_local_branch.upstream()?;
 
-    let all_push_requests = api_client.list_push_requests("opened")?;
+    let all_push_requests = api_client.list_push_requests(PushRequestState::Opened)?;
     let all_protected_branches = api_client.list_protected_branches()?;
 
     let all_branches = git::get_remote_branches(&repository)?.collect::<Vec<_>>();
