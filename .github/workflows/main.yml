@@ -3,6 +3,10 @@ on: push
 jobs:
   main:
     steps:
+      - name: Workspace Info
+        run: |
+          uname -a
+          ls
       - name: Lint
         run: cargo fmt -- --check
       - name: Clippy
