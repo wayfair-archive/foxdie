@@ -1,16 +1,15 @@
 name: CI
+
 on: push
+
 jobs:
   main:
+    runs-on: ubuntu-latest
     steps:
-      - name: Workspace Info
-        run: |
-          uname -a
-          ls
+      - uses: actions/checkout@master
       - name: Lint
         run: cargo fmt -- --check
       - name: Clippy
         run: cargo clippy -- -Dwarnings
       - name: Test
         run: cargo test
-    runs-on: ubuntu-latest
