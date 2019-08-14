@@ -9,8 +9,4 @@ jobs:
         run: cargo clippy -- -Dwarnings
       - name: Test
         run: cargo test
-    strategy:
-      matrix:
-        os:
-          - windows-latest
-          - ubuntu-latest
+    runs-on: ubuntu-latest
