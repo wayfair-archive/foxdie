@@ -1,12 +1,26 @@
+.default_run_strategy: &default_run_strategy
+    runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+            os:
+                - ubuntu-latest
+                - windows-latest
+
 name: CI
 
-on: push
+on:
+    - push
 
 jobs:
-  main:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1.0.0
-      - run: cargo fmt -- --check
-      - run: cargo clippy -- -Dwarnings
-      - run: cargo test
+    checks:
+        <<: *default_run_strategy
+        steps:
+            - uses: actions/checkout@v1.0.0
+            - run: cargo fmt -- --check
+            - run: cargo clippy -- -Dwarnings
+            - run: cargo test
+    unit_tests:
+        <<: *default_run_strategy
+        steps:
+            - uses: actions/checkout@v1.0.0
+            - run: cargo build && cargo test
