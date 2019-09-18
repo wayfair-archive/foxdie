@@ -20,7 +20,7 @@
 mod v4;
 
 pub(self) use self::v4::*;
-use crate::{PushRequest, SCMProviderImpl};
+use crate::{PushRequest, PushRequestState, SCMProviderImpl};
 use log::{debug, error};
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
@@ -62,14 +62,14 @@ impl Gitlab {
 
     fn merge_requests_for_page(
         &self,
-        state: &'static str,
+        state: &PushRequestState,
         page: &str,
     ) -> ReqwestResult<Vec<MergeRequest>> {
         let url = format!("{}/merge_requests", self.construct_base_url());
         debug!("{}", url);
         self.client
             .get(&*url)
-            .query(&[("state", state), ("page", page)])
+            .query(&[("state", state.gitlab_value()), ("page", page)])
             .send()?
             .json()
     }
@@ -96,10 +96,10 @@ impl Gitlab {
 }
 
 impl SCMProviderImpl for Gitlab {
-    fn list_push_requests(&self, state: &'static str) -> ReqwestResult<Vec<PushRequest>> {
+    fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
         let url = format!("{}/merge_requests", self.construct_base_url());
         debug!("{}", url);
-        let query = [("state", state)];
+        let query = [("state", state.gitlab_value())];
 
         let head = self
             .client
@@ -120,7 +120,7 @@ impl SCMProviderImpl for Gitlab {
             let mut items = Vec::with_capacity(total_items);
             for page in current..=total_pages {
                 let mut push_requests = self
-                    .merge_requests_for_page(state, &*page.to_string())
+                    .merge_requests_for_page(&state, &*page.to_string())
                     .map(|merge_requests| {
                         merge_requests
                             .into_iter()

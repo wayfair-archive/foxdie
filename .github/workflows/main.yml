@@ -1,0 +1,27 @@
+name: CI
+
+on:
+    - push
+
+jobs:
+    checks:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - windows-latest
+        steps:
+            - uses: actions/checkout@v1.0.0
+            - run: cargo fmt -- --check
+            - run: cargo clippy -- -Dwarnings
+    unit_tests:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - windows-latest
+        steps:
+            - uses: actions/checkout@v1.0.0
+            - run: cargo build && cargo test

@@ -20,7 +20,7 @@
 mod v3;
 
 pub(self) use self::v3::*;
-use crate::{PushRequest, SCMProviderImpl};
+use crate::{PushRequest, PushRequestState, SCMProviderImpl};
 use log::debug;
 use reqwest::header;
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -69,10 +69,10 @@ impl GitHub {
 }
 
 impl SCMProviderImpl for GitHub {
-    fn list_push_requests(&self, state: &'static str) -> ReqwestResult<Vec<PushRequest>> {
+    fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
         let url = format!("{}/pulls", self.construct_base_url());
         debug!("{}", url);
-        let query = [("state", state)];
+        let query = [("state", state.github_value())];
 
         let mut initial_resp = self.client.get(&*url).query(&query).send()?;
         let mut headers = initial_resp.headers().clone();

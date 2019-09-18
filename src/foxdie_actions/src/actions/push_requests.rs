@@ -19,7 +19,7 @@
 
 use crate::error::FoxdieError;
 use chrono::{DateTime, FixedOffset};
-use foxdie_services::get_api_client_for_url;
+use foxdie_services::{get_api_client_for_url, PushRequestState};
 use log::info;
 
 pub fn clean_push_requests(
@@ -37,7 +37,7 @@ pub fn clean_push_requests(
         "Checking for push requests created from before {:?}.",
         since_date
     );
-    let all_push_requests = api_client.list_push_requests("opened")?;
+    let all_push_requests = api_client.list_push_requests(PushRequestState::Opened)?;
     let all_push_requests_count = all_push_requests.len();
     let eligible_push_requests = all_push_requests
         .into_iter()

@@ -56,7 +56,7 @@ pub fn get_api_client_for_url(url: &str, token: &str) -> Option<SCMProvider> {
 }
 
 pub(crate) trait SCMProviderImpl {
-    fn list_push_requests(&self, state: &'static str) -> ReqwestResult<Vec<PushRequest>>;
+    fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>>;
     fn close_push_request(&self, id: i32) -> ReqwestResult<()>;
     fn list_protected_branches(&self) -> ReqwestResult<Vec<ProtectedBranch>>;
 }
@@ -95,7 +95,7 @@ impl SCMProvider {
         }
     }
 
-    pub fn list_push_requests(&self, state: &'static str) -> ReqwestResult<Vec<PushRequest>> {
+    pub fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
         self.inner.list_push_requests(state)
     }
 
@@ -105,6 +105,28 @@ impl SCMProvider {
 
     pub fn list_protected_branches(&self) -> ReqwestResult<Vec<ProtectedBranch>> {
         self.inner.list_protected_branches()
+    }
+}
+
+#[derive(Debug)]
+pub enum PushRequestState {
+    Opened,
+    Closed,
+}
+
+impl PushRequestState {
+    fn github_value(&self) -> &'static str {
+        match self {
+            PushRequestState::Opened => "open",
+            PushRequestState::Closed => "closed",
+        }
+    }
+
+    fn gitlab_value(&self) -> &'static str {
+        match self {
+            PushRequestState::Opened => "opened",
+            PushRequestState::Closed => "closed",
+        }
     }
 }
 
