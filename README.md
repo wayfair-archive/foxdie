@@ -1,6 +1,6 @@
 # foxdie
 
-_A super fast tool for taking stale branches and push requests and deleting and/or closing them_
+_A super-fast tool for taking stale branches and push requests and deleting and/or closing them_
 
 [![Actions Status](https://github.com/wayfair/foxdie/workflows/CI/badge.svg?branch=master)](https://github.com/wayfair/foxdie/actions)
 

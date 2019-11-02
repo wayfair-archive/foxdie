@@ -3,6 +3,11 @@ name = "foxdie"
 version = "0.5.0"
 authors = ["Aaron Sky <asky@wayfair.com>"]
 edition = "2018"
+description = "A super-fast tool for taking stale branches and push requests and deleting and/or closing them."
+license = "BSD-2-Clause"
+documentation = "https://docs.rs/foxdie"
+homepage = "https://github.com/wayfair/foxdie"
+repository = "https://github.com/wayfair/foxdie"
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
