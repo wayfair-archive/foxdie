@@ -54,7 +54,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                 command: build
-            - build: Perform Unit Tests
+            - name: Perform Unit Tests
               uses: actions-rs/cargo@v1
               with:
                 command: test
