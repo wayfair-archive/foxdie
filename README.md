@@ -2,6 +2,8 @@
 
 _A super fast tool for taking stale branches and push requests and deleting and/or closing them_
 
+[![Actions Status](https://github.com/wayfair/foxdie/workflows/CI/badge.svg?branch=master)](https://github.com/wayfair/foxdie/actions)
+
 ## Setup
 
 Make sure the system you're running on has stable Rust installed. Foxdie supports Rust 1.27 and higher. Installing stable Rust is as easy as installing [`rustup`](https://www.rust-lang.org/en-US/install.html) via your command line.

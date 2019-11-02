@@ -1,60 +1,64 @@
 name: CI
 
 on:
-    - push
+  - push:
+      paths-ignore:
+        - "**/*.md"
+        - "LICENSE"
+        - "**/.gitignore"
 
 jobs:
-    checks:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os:
-                    - ubuntu-latest
-                    - windows-latest
-                    - macOS-latest
-                rust-toolchain:
-                    - stable
-                    - nightly
-        steps:
-            - uses: actions/checkout@v1.0.0
-            - uses: actions-rs/toolchain@v1
-              with:
-                profile: minimal
-                toolchain:  ${{ matrix.rust-toolchain }}
-                components: rustfmt, clippy
-            - name: Rustfmt
-              uses: actions-rs/cargo@v1
-              with:
-                command: fmt
-                args: -- --check
-            - name: Clippy
-              continue-on-error: ${{ matrix.rust-toolchain == 'nightly' }}
-              uses: actions-rs/cargo@v1
-              with:
-                command: clippy
-                args: -- -Dwarnings
-    unit_tests:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os:
-                    - ubuntu-latest
-                    - windows-latest
-                    - macOS-latest
-                rust-toolchain:
-                    - stable
-                    - nightly
-        steps:
-            - uses: actions/checkout@v1.0.0
-            - uses: actions-rs/toolchain@v1
-              with:
-                profile: minimal
-                toolchain:  ${{ matrix.rust-toolchain }}
-            - name: Build (debug)
-              uses: actions-rs/cargo@v1
-              with:
-                command: build
-            - name: Perform Unit Tests
-              uses: actions-rs/cargo@v1
-              with:
-                command: test
+  checks:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-latest
+        rust-toolchain:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v1.0.0
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust-toolchain }}
+          components: rustfmt, clippy
+      - name: Rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+      - name: Clippy
+        continue-on-error: ${{ matrix.rust-toolchain == 'nightly' }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -Dwarnings
+  unit_tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-latest
+        rust-toolchain:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v1.0.0
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust-toolchain }}
+      - name: Build (debug)
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+      - name: Perform Unit Tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
