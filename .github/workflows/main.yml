@@ -1,11 +1,11 @@
 name: CI
 
 on:
-  - push:
-      paths-ignore:
-        - "**/*.md"
-        - "LICENSE"
-        - "**/.gitignore"
+  push:
+    paths-ignore:
+      - "**/*.md"
+      - "LICENSE"
+      - "**/.gitignore"
 
 jobs:
   checks:
