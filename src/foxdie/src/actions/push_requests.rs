@@ -19,7 +19,7 @@
 
 use crate::error::FoxdieError;
 use chrono::{DateTime, FixedOffset};
-use foxdie_services::{get_api_client_for_url, PushRequestState};
+use crate::services::{get_api_client_for_url, PushRequest, PushRequestState};
 use log::info;
 
 pub fn clean_push_requests(
@@ -59,7 +59,7 @@ pub fn clean_push_requests(
 }
 
 fn print_push_requests_to_close(
-    push_requests: &[foxdie_services::PushRequest],
+    push_requests: &[PushRequest],
     all_push_requests_count: usize,
 ) {
     info!(

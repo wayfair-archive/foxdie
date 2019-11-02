@@ -20,7 +20,7 @@
 mod v4;
 
 pub(self) use self::v4::*;
-use crate::{PushRequest, PushRequestState, SCMProviderImpl};
+use super::{PushRequest, PushRequestState, SCMProviderImpl};
 use log::{debug, error};
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
@@ -148,7 +148,7 @@ impl SCMProviderImpl for Gitlab {
             .map_err(Gitlab::handle_error)
     }
 
-    fn list_protected_branches(&self) -> ReqwestResult<Vec<crate::ProtectedBranch>> {
+    fn list_protected_branches(&self) -> ReqwestResult<Vec<super::ProtectedBranch>> {
         let url = format!("{}/protected_branches", self.construct_base_url());
         let protected_branches: Vec<ProtectedBranch> = self.client.get(&*url).send()?.json()?;
         Ok(protected_branches

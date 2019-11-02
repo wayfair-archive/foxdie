@@ -18,8 +18,10 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::error::FoxdieError;
+use crate::services::{
+    get_api_client_for_remote, git, ProtectedBranch, PushRequest, PushRequestState,
+};
 use chrono::{DateTime, FixedOffset};
-use foxdie_services::{get_api_client_for_remote, git, PushRequestState};
 use log::{info, warn};
 use std::env;
 use std::path::Path;
@@ -99,8 +101,8 @@ fn is_branch_to_delete<'a>(
     current_branch: &'a git::Branch,
     since_date: &'a DateTime<FixedOffset>,
     repository: &'a git::Repository,
-    push_requests: &'a [foxdie_services::PushRequest],
-    protected_branches: &'a [foxdie_services::ProtectedBranch],
+    push_requests: &'a [PushRequest],
+    protected_branches: &'a [ProtectedBranch],
 ) -> impl FnMut(&git::Branch<'a>) -> bool {
     move |branch| {
         branch.name().into_iter().flatten().any(|branch_name| {

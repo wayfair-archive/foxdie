@@ -17,11 +17,13 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+mod actions;
 mod cli;
+mod error;
+mod services;
 
 use cli::{build_cli, parse_shared_arguments, SharedArguments};
 use env_logger;
-use foxdie_actions::actions;
 use log::{error, warn};
 use std::env;
 use std::process;

@@ -19,7 +19,7 @@
 
 use crate::error::FoxdieError;
 use chrono::{DateTime, TimeZone, Utc};
-use foxdie_services::{git, PushRequest};
+use crate::services::{git, PushRequest};
 use log::info;
 use serde::Serialize;
 use serde_json;

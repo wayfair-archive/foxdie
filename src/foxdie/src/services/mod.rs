@@ -111,6 +111,7 @@ impl SCMProvider {
 #[derive(Debug)]
 pub enum PushRequestState {
     Opened,
+    #[allow(dead_code)]
     Closed,
 }
 
