@@ -17,7 +17,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::PushRequest;
+use super::PushRequest;
 use chrono::{DateTime, FixedOffset};
 use glob::{Pattern, PatternError};
 use serde::{Deserialize, Serialize};
@@ -107,9 +107,9 @@ pub struct ProtectedBranch {
     pub name: String,
 }
 
-impl From<ProtectedBranch> for Result<crate::ProtectedBranch, PatternError> {
+impl From<ProtectedBranch> for Result<super::super::ProtectedBranch, PatternError> {
     fn from(branch: ProtectedBranch) -> Self {
         let pattern = Pattern::new(&branch.name)?;
-        Ok(crate::ProtectedBranch { pattern })
+        Ok(super::super::ProtectedBranch { pattern })
     }
 }

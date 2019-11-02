@@ -20,7 +20,7 @@
 mod v3;
 
 pub(self) use self::v3::*;
-use crate::{PushRequest, PushRequestState, SCMProviderImpl};
+use super::{PushRequest, PushRequestState, SCMProviderImpl};
 use log::debug;
 use reqwest::header;
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -114,7 +114,7 @@ impl SCMProviderImpl for GitHub {
             .map(|_| ())
     }
 
-    fn list_protected_branches(&self) -> ReqwestResult<Vec<crate::ProtectedBranch>> {
+    fn list_protected_branches(&self) -> ReqwestResult<Vec<super::ProtectedBranch>> {
         let url = format!("{}/branches", self.construct_base_url());
         let protected_branches: Vec<ProtectedBranch> = self
             .client
