@@ -18,8 +18,8 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::error::FoxdieError;
-use chrono::{DateTime, FixedOffset};
 use crate::services::{get_api_client_for_url, PushRequest, PushRequestState};
+use chrono::{DateTime, FixedOffset};
 use log::info;
 
 pub fn clean_push_requests(
@@ -58,10 +58,7 @@ pub fn clean_push_requests(
     Ok(())
 }
 
-fn print_push_requests_to_close(
-    push_requests: &[PushRequest],
-    all_push_requests_count: usize,
-) {
+fn print_push_requests_to_close(push_requests: &[PushRequest], all_push_requests_count: usize) {
     info!(
         "Found {} eligible push requests out of {} total{}",
         push_requests.len(),

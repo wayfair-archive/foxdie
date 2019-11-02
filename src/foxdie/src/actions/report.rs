@@ -18,8 +18,8 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::error::FoxdieError;
-use chrono::{DateTime, TimeZone, Utc};
 use crate::services::{git, PushRequest};
+use chrono::{DateTime, TimeZone, Utc};
 use log::info;
 use serde::Serialize;
 use serde_json;
