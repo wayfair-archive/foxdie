@@ -48,7 +48,7 @@ impl fmt::Display for FoxdieError {
 }
 
 impl error::Error for FoxdieError {
-    fn cause(&self) -> Option<&error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
             FoxdieError::UnsupportedProvider(_) => None,
             FoxdieError::Git(ref err) => Some(err),
