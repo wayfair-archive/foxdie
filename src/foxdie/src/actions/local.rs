@@ -32,7 +32,7 @@ pub struct Options<'a> {
     pub token: &'a str,
 }
 
-pub fn clean_remote_branches<P>(path: Option<P>, opts: Options) -> Result<(), FoxdieError>
+pub async fn clean_remote_branches<P>(path: Option<P>, opts: Options<'_>) -> Result<(), FoxdieError>
 where
     P: AsRef<Path>,
 {
@@ -43,18 +43,18 @@ where
     };
     let remotes = repo.remotes()?;
     for remote in remotes.into_iter().filter_map(|r| r) {
-        clean_branches_on_remote(remote, &repo, &opts)?;
+        clean_branches_on_remote(remote, &repo, &opts).await?;
     }
     Ok(())
 }
 
-fn clean_branches_on_remote(
+async fn clean_branches_on_remote(
     remote_name: &str,
     repository: &git::Repository,
-    opts: &Options,
+    opts: &Options<'_>,
 ) -> Result<(), FoxdieError> {
     let mut remote = repository.find_remote(remote_name)?;
-    let api_client = if let Some(client) = get_api_client_for_remote(&remote, opts.token) {
+    let api_client = if let Some(client) = get_api_client_for_remote(&remote, opts.token).await {
         client
     } else {
         warn!(
@@ -68,8 +68,10 @@ fn clean_branches_on_remote(
     let current_local_branch = git::get_current_branch(&repository)?;
     let current_remote_branch = current_local_branch.upstream()?;
 
-    let all_push_requests = api_client.list_push_requests(PushRequestState::Opened)?;
-    let all_protected_branches = api_client.list_protected_branches()?;
+    let all_push_requests = api_client
+        .list_push_requests(PushRequestState::Opened)
+        .await?;
+    let all_protected_branches = api_client.list_protected_branches().await?;
 
     let all_branches = git::get_remote_branches(&repository)?.collect::<Vec<_>>();
     let all_branches_count = all_branches.len();

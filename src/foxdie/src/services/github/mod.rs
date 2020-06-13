@@ -21,6 +21,7 @@ mod v3;
 
 pub(self) use self::v3::*;
 use super::{PushRequest, PushRequestState, SCMProviderImpl};
+use async_trait::async_trait;
 use log::debug;
 use reqwest::header;
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -68,15 +69,16 @@ impl GitHub {
     }
 }
 
+#[async_trait]
 impl SCMProviderImpl for GitHub {
-    fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
+    async fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
         let url = format!("{}/pulls", self.construct_base_url());
         debug!("{}", url);
         let query = [("state", state.github_value())];
 
-        let mut initial_resp = self.client.get(&*url).query(&query).send()?;
+        let initial_resp = self.client.get(&*url).query(&query).send().await?;
         let mut headers = initial_resp.headers().clone();
-        let pull_requests: Vec<PullRequest> = initial_resp.json()?;
+        let pull_requests: Vec<PullRequest> = initial_resp.json().await?;
 
         let mut items: Vec<PushRequest> = pull_requests
             .into_iter()
@@ -86,14 +88,15 @@ impl SCMProviderImpl for GitHub {
             let links = Links::parse_from_rfc5988(link_header);
             if let Some(next) = links.next() {
                 debug!("{}", next.uri);
-                let mut resp = self.client.get(&*next.uri).send()?;
+                let resp = self.client.get(&*next.uri).send().await?;
                 headers = resp.headers().clone();
-                let mut push_requests = resp.json().map(|pull_requests: Vec<PullRequest>| {
-                    pull_requests
-                        .into_iter()
-                        .map(From::from)
-                        .collect::<Vec<_>>()
-                })?;
+                let mut push_requests =
+                    resp.json().await.map(|pull_requests: Vec<PullRequest>| {
+                        pull_requests
+                            .into_iter()
+                            .map(From::from)
+                            .collect::<Vec<_>>()
+                    })?;
                 items.append(&mut push_requests);
             } else {
                 break;
@@ -103,7 +106,7 @@ impl SCMProviderImpl for GitHub {
         Ok(items)
     }
 
-    fn close_push_request(&self, id: i32) -> ReqwestResult<()> {
+    async fn close_push_request(&self, id: i32) -> ReqwestResult<()> {
         let url = format!("{}/pulls/{}", self.construct_base_url(), id);
         self.client
             .patch(&*url)
@@ -111,17 +114,20 @@ impl SCMProviderImpl for GitHub {
                 state: PullRequestStateEvent::Closed,
             })
             .send()
+            .await
             .map(|_| ())
     }
 
-    fn list_protected_branches(&self) -> ReqwestResult<Vec<super::ProtectedBranch>> {
+    async fn list_protected_branches(&self) -> ReqwestResult<Vec<super::ProtectedBranch>> {
         let url = format!("{}/branches", self.construct_base_url());
         let protected_branches: Vec<ProtectedBranch> = self
             .client
             .get(&*url)
             .query(&[("protected", true)])
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
         Ok(protected_branches
             .into_iter()
             .map(From::from)
@@ -173,14 +179,14 @@ impl Link {
     fn parse_from_rfc5988(header: &str) -> Self {
         let mut components = header.split(';');
         let uri = components
-            .nth(0)
+            .next()
             .unwrap_or_default()
             .trim()
             .trim_start_matches('<')
             .trim_end_matches('>')
             .to_string();
         let rel = components
-            .nth(0)
+            .next()
             .unwrap_or_default()
             .trim()
             .trim_start_matches("rel=\"")

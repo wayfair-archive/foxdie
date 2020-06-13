@@ -19,7 +19,6 @@
 
 use chrono::{DateTime, FixedOffset};
 use clap::{crate_version, App, AppSettings, Arg, ArgMatches, SubCommand};
-use std::error::Error;
 
 pub fn build_cli<'a, 'b>() -> App<'a, 'b> {
     let args = [
@@ -92,7 +91,7 @@ pub fn build_cli<'a, 'b>() -> App<'a, 'b> {
 fn validate_date(s: String) -> Result<(), String> {
     DateTime::parse_from_rfc3339(&s)
         .map(|_| ())
-        .map_err(|e| e.description().to_owned())
+        .map_err(|e| e.to_string())
 }
 
 pub struct SharedArguments<'a> {

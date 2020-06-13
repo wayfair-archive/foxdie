@@ -22,7 +22,6 @@ use crate::services::{git, PushRequest};
 use chrono::{DateTime, TimeZone, Utc};
 use log::info;
 use serde::Serialize;
-use serde_json;
 use std::env;
 use std::fs::File;
 use std::io::Write;

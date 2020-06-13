@@ -21,11 +21,25 @@ mod v4;
 
 pub(self) use self::v4::*;
 use super::{PushRequest, PushRequestState, SCMProviderImpl};
-use log::{debug, error};
+use async_trait::async_trait;
+use log::debug;
+use percent_encoding::{utf8_percent_encode, AsciiSet};
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
 use reqwest::Result as ReqwestResult;
-use url::percent_encoding::{utf8_percent_encode, PATH_SEGMENT_ENCODE_SET};
+
+const PATH_SEGMENT_ENCODE_SET: &AsciiSet = &percent_encoding::CONTROLS
+    .add(b' ')
+    .add(b'"')
+    .add(b'<')
+    .add(b'>')
+    .add(b'`')
+    .add(b'#')
+    .add(b'?')
+    .add(b'{')
+    .add(b'}')
+    .add(b'/')
+    .add(b'%');
 
 #[derive(Debug)]
 pub struct Gitlab {
@@ -60,7 +74,7 @@ impl Gitlab {
         format!("{}/api/v4/projects/{}", self.base_url, namespace_encoded)
     }
 
-    fn merge_requests_for_page(
+    async fn merge_requests_for_page(
         &self,
         state: &PushRequestState,
         page: &str,
@@ -70,43 +84,21 @@ impl Gitlab {
         self.client
             .get(&*url)
             .query(&[("state", state.gitlab_value()), ("page", page)])
-            .send()?
+            .send()
+            .await?
             .json()
-    }
-
-    fn handle_error(error: reqwest::Error) -> reqwest::Error {
-        if error.is_http() {
-            match error.url() {
-                None => error!("No URL provided"),
-                Some(url) => error!("Problem making request to: {}", url),
-            }
-        }
-        if error.is_serialization() {
-            let serde_error = match error.get_ref() {
-                Some(err) => err,
-                _ => return error,
-            };
-            error!("Serialization error: {}", serde_error);
-        }
-        if error.is_redirect() {
-            error!("Server redirection error");
-        }
-        error
+            .await
     }
 }
 
+#[async_trait]
 impl SCMProviderImpl for Gitlab {
-    fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
+    async fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
         let url = format!("{}/merge_requests", self.construct_base_url());
         debug!("{}", url);
         let query = [("state", state.gitlab_value())];
 
-        let head = self
-            .client
-            .head(&*url)
-            .query(&query)
-            .send()
-            .map_err(Gitlab::handle_error)?;
+        let head = self.client.head(&*url).query(&query).send().await?;
         let headers = head.headers();
         let pages = Pages::new(&headers);
 
@@ -121,13 +113,13 @@ impl SCMProviderImpl for Gitlab {
             for page in current..=total_pages {
                 let mut push_requests = self
                     .merge_requests_for_page(&state, &*page.to_string())
+                    .await
                     .map(|merge_requests| {
                         merge_requests
                             .into_iter()
                             .map(From::from)
                             .collect::<Vec<_>>()
-                    })
-                    .map_err(Gitlab::handle_error)?;
+                    })?;
                 items.append(&mut push_requests);
             }
             Ok(items)
@@ -136,7 +128,7 @@ impl SCMProviderImpl for Gitlab {
         }
     }
 
-    fn close_push_request(&self, id: i32) -> ReqwestResult<()> {
+    async fn close_push_request(&self, id: i32) -> ReqwestResult<()> {
         let url = format!("{}/merge_requests/{}", self.construct_base_url(), id);
         self.client
             .put(&*url)
@@ -144,13 +136,14 @@ impl SCMProviderImpl for Gitlab {
                 state_event: MergeRequestStateEvent::Close,
             })
             .send()
+            .await
             .map(|_res| ())
-            .map_err(Gitlab::handle_error)
     }
 
-    fn list_protected_branches(&self) -> ReqwestResult<Vec<super::ProtectedBranch>> {
+    async fn list_protected_branches(&self) -> ReqwestResult<Vec<super::ProtectedBranch>> {
         let url = format!("{}/protected_branches", self.construct_base_url());
-        let protected_branches: Vec<ProtectedBranch> = self.client.get(&*url).send()?.json()?;
+        let protected_branches: Vec<ProtectedBranch> =
+            self.client.get(&*url).send().await?.json().await?;
         Ok(protected_branches
             .into_iter()
             .map(From::from)

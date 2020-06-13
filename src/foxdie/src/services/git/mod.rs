@@ -69,7 +69,8 @@ pub fn fetch_refs(remote: &mut Remote) -> Result<(), Error> {
         remote.name().unwrap_or("[UNKNOWN REMOTE NAME]"),
         remote.url().unwrap_or("[UNKNOWN REMOTE URL]")
     );
-    remote.fetch(&[], Some(&mut opts), None)
+    let refs: [&str; 0] = [];
+    remote.fetch(&refs, Some(&mut opts), None)
 }
 
 pub fn get_current_branch(repo: &Repository) -> Result<Branch, Error> {

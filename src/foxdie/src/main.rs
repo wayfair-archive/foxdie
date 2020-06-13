@@ -22,8 +22,8 @@ mod cli;
 mod error;
 mod services;
 
+use async_std::task;
 use cli::{build_cli, parse_shared_arguments, SharedArguments};
-use env_logger;
 use log::{error, warn};
 use std::env;
 use std::process;
@@ -32,7 +32,15 @@ fn main() {
     setup_logger();
     let app = build_cli();
     let app_m = app.get_matches();
-    let res = match app_m.subcommand() {
+    let res = task::block_on(run_matches(&app_m));
+    if let Err(err) = res {
+        error!("{}", err);
+        process::exit(1);
+    }
+}
+
+async fn run_matches(args: &clap::ArgMatches<'_>) -> Result<(), error::FoxdieError> {
+    match args.subcommand() {
         ("branches", Some(sub_m)) => {
             let SharedArguments {
                 should_delete,
@@ -51,6 +59,7 @@ fn main() {
                     token,
                 },
             )
+            .await
         }
         ("push-requests", Some(sub_m)) => {
             let SharedArguments {
@@ -64,7 +73,7 @@ fn main() {
             let url = sub_m
                 .value_of("URL")
                 .expect("URL was supposed to be passed as a positional argument.");
-            actions::push_requests::clean_push_requests(should_delete, &since, &url, &token)
+            actions::push_requests::clean_push_requests(should_delete, &since, &url, &token).await
         }
         ("report", Some(sub_m)) => {
             let output_path = sub_m.value_of("output");
@@ -72,10 +81,6 @@ fn main() {
             actions::report::report(&output_path, repo_path)
         }
         _ => unreachable!(),
-    };
-    if let Err(err) = res {
-        error!("{}", err);
-        process::exit(1);
     }
 }
 
@@ -85,8 +90,8 @@ fn setup_logger() {
         _ => String::from("foxdie=info"),
     };
     env_logger::builder()
-        .default_format_module_path(false)
-        .default_format_timestamp(false)
+        .format_module_path(false)
+        .format_timestamp(None)
         .parse_filters(&rust_log)
         .init();
 }

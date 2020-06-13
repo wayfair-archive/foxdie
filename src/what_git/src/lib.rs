@@ -46,20 +46,22 @@ use std::result;
 /// ```no_run
 /// use what_git::{what_git, SCMKind};
 ///
-/// fn main() {
-///     let scm = what_git("https://github.com/rust-lang/rust", "<PERSONAL ACCESS TOKEN>").unwrap();
-///     if scm.kind == SCMKind::GitHub {
-///         println!("Do something with GitHub...");
-///     }
-/// }
+/// async {
+///     let scm = what_git("https://github.com/rust-lang/rust", "<PERSONAL ACCESS TOKEN>")
+///         .await
+///         .map(|scm| match scm.kind {
+///             SCMKind::GitHub => println!("Do something with GitHub..."),
+///             _ => unimplemented!(),
+///         });
+/// };
 /// ```
 /// [`what_git::Result`]: ./type.Result.html
 /// [`what_git::SCMKind`]: ./enum.SCMKind.html
 /// [`what_git::Error`]: ./enum.Error.html
-pub fn what_git(repository: &str, token: &str) -> Result {
+pub async fn what_git(repository: &str, token: &str) -> Result {
     let url_str = scrub_git_url_if_needed(repository);
     let url = Url::parse(&url_str).or_else(|_| Err(Error::UnknownProvider(url_str.to_string())))?;
-    metadata_for_url(&url, token)
+    metadata_for_url(&url, token).await
 }
 
 /// Remove various non-standard decorations, such as SSH decorations, from a URL string to get a string conforming to
@@ -77,7 +79,7 @@ fn scrub_git_url_if_needed(repository: &str) -> String {
 /// Determines what source control management (SCM) solution a repository URL belongs to. Returns a [`what_git::Result`]
 /// type describing the structure of the URL and the associated [`what_git::SCMKind`], or some error of type
 /// [`what_git::Error`].
-fn metadata_for_url(url: &Url, token: &str) -> Result {
+async fn metadata_for_url(url: &Url, token: &str) -> Result {
     // Extract the first two path components in the URL to guess at the repository owner and name.
     let path_components = url
         .path_segments()
@@ -123,10 +125,9 @@ fn metadata_for_url(url: &Url, token: &str) -> Result {
     } else {
         // 5. Attempt to connect to an SCM's API using known unique endpoints, and match on the possible successes.
         let base_url_candidate = format!("https://{}", hostname);
-        match (
-            verify_github(&base_url_candidate, token),
-            verify_gitlab(&base_url_candidate, token),
-        ) {
+        let github_result = verify_github(&base_url_candidate, token).await;
+        let gitlab_result = verify_gitlab(&base_url_candidate, token).await;
+        match (github_result, gitlab_result) {
             (Ok(true), _) => {
                 base_url = format!("{}/api/v3", base_url_candidate);
                 kind = SCMKind::GitHub;
@@ -147,7 +148,7 @@ fn metadata_for_url(url: &Url, token: &str) -> Result {
 }
 
 // Attempt to connect to the GitHub `/zen` endpoint, which is unique to GitHub's API.
-fn verify_github(base_url: &str, token: &str) -> result::Result<bool, reqwest::Error> {
+async fn verify_github(base_url: &str, token: &str) -> result::Result<bool, reqwest::Error> {
     let url = format!("{}/api/v3/zen", base_url);
 
     Client::new()
@@ -156,17 +157,19 @@ fn verify_github(base_url: &str, token: &str) -> result::Result<bool, reqwest::E
         .header(header::AUTHORIZATION, format!("Bearer {}", token))
         .header(header::USER_AGENT, "com.wayfair.what_gitjson")
         .send()
+        .await
         .map(|res| res.status().is_success())
 }
 
 // Attempt to connect to the Gitlab `/version` endpoint, which is unique to Gitlab's API.
-fn verify_gitlab(base_url: &str, token: &str) -> result::Result<bool, reqwest::Error> {
+async fn verify_gitlab(base_url: &str, token: &str) -> result::Result<bool, reqwest::Error> {
     let url = format!("{}/api/v4/version", base_url);
 
     Client::new()
         .get(&*url)
         .header("private-token", token)
         .send()
+        .await
         .map(|res| res.status().is_success())
 }
 

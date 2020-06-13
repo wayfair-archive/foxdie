@@ -22,13 +22,13 @@ use crate::services::{get_api_client_for_url, PushRequest, PushRequestState};
 use chrono::{DateTime, FixedOffset};
 use log::info;
 
-pub fn clean_push_requests(
+pub async fn clean_push_requests(
     should_delete: bool,
     since_date: &DateTime<FixedOffset>,
     url: &str,
     token: &str,
 ) -> Result<(), FoxdieError> {
-    let api_client = if let Some(client) = get_api_client_for_url(url, token) {
+    let api_client = if let Some(client) = get_api_client_for_url(url, token).await {
         client
     } else {
         return Err(FoxdieError::UnsupportedProvider(url.to_string()));
@@ -37,7 +37,9 @@ pub fn clean_push_requests(
         "Checking for push requests created from before {:?}.",
         since_date
     );
-    let all_push_requests = api_client.list_push_requests(PushRequestState::Opened)?;
+    let all_push_requests = api_client
+        .list_push_requests(PushRequestState::Opened)
+        .await?;
     let all_push_requests_count = all_push_requests.len();
     let eligible_push_requests = all_push_requests
         .into_iter()
@@ -51,7 +53,7 @@ pub fn clean_push_requests(
     }
     info!("\nPreparing to close push requests...");
     for pr in &eligible_push_requests {
-        api_client.close_push_request(pr.id)?;
+        api_client.close_push_request(pr.id).await?;
         info!("Closed #{}", pr.id);
     }
     info!("All done closing push requests.");

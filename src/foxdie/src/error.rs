@@ -18,8 +18,6 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::services::git;
-use reqwest;
-use serde_json;
 use std::error;
 use std::fmt;
 use std::io;

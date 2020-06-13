@@ -27,6 +27,7 @@ mod gitlab;
 use self::git::Remote;
 use self::github::GitHub;
 use self::gitlab::Gitlab;
+use async_trait::async_trait;
 use chrono::{DateTime, FixedOffset};
 use glob::Pattern;
 use log::error;
@@ -35,9 +36,9 @@ use what_git::{SCMKind, SCM};
 
 /// Return `Some(SCMProvider)` if the given Git remote can be associated with a known and supported Git SCM. Otherwise,
 /// print an error and return `None`.
-pub fn get_api_client_for_remote(remote: &Remote, token: &str) -> Option<SCMProvider> {
+pub async fn get_api_client_for_remote(remote: &Remote<'_>, token: &str) -> Option<SCMProvider> {
     if let Some(url) = remote.url() {
-        get_api_client_for_url(url, token)
+        get_api_client_for_url(url, token).await
     } else {
         None
     }
@@ -45,8 +46,8 @@ pub fn get_api_client_for_remote(remote: &Remote, token: &str) -> Option<SCMProv
 
 /// Return `Some(SCMProvider)` if the given Git remote URL can be associated with a known and supported Git SCM.
 /// Otherwise, print an error and return `None`.
-pub fn get_api_client_for_url(url: &str, token: &str) -> Option<SCMProvider> {
-    match what_git::what_git(url, token) {
+pub async fn get_api_client_for_url(url: &str, token: &str) -> Option<SCMProvider> {
+    match what_git::what_git(url, token).await {
         Ok(description) => SCMProvider::from_scm_description(description, token),
         Err(err) => {
             error!("{}", err);
@@ -55,10 +56,11 @@ pub fn get_api_client_for_url(url: &str, token: &str) -> Option<SCMProvider> {
     }
 }
 
+#[async_trait]
 pub(crate) trait SCMProviderImpl {
-    fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>>;
-    fn close_push_request(&self, id: i32) -> ReqwestResult<()>;
-    fn list_protected_branches(&self) -> ReqwestResult<Vec<ProtectedBranch>>;
+    async fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>>;
+    async fn close_push_request(&self, id: i32) -> ReqwestResult<()>;
+    async fn list_protected_branches(&self) -> ReqwestResult<Vec<ProtectedBranch>>;
 }
 
 /// Wrapper for an `SCMProviderImpl` implementer. Bridges generic SCM API requests to the appropriate platform type.
@@ -95,16 +97,19 @@ impl SCMProvider {
         }
     }
 
-    pub fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
-        self.inner.list_push_requests(state)
+    pub async fn list_push_requests(
+        &self,
+        state: PushRequestState,
+    ) -> ReqwestResult<Vec<PushRequest>> {
+        self.inner.list_push_requests(state).await
     }
 
-    pub fn close_push_request(&self, id: i32) -> ReqwestResult<()> {
-        self.inner.close_push_request(id)
+    pub async fn close_push_request(&self, id: i32) -> ReqwestResult<()> {
+        self.inner.close_push_request(id).await
     }
 
-    pub fn list_protected_branches(&self) -> ReqwestResult<Vec<ProtectedBranch>> {
-        self.inner.list_protected_branches()
+    pub async fn list_protected_branches(&self) -> ReqwestResult<Vec<ProtectedBranch>> {
+        self.inner.list_protected_branches().await
     }
 }
 
