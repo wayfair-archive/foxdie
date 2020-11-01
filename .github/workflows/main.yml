@@ -26,6 +26,7 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust-toolchain }}
           components: rustfmt, clippy
+          override: true
       - name: Rustfmt
         uses: actions-rs/cargo@v1
         with:
@@ -54,6 +55,7 @@ jobs:
         with:
           profile: minimal
           toolchain: ${{ matrix.rust-toolchain }}
+          override: true
       - name: Build (debug)
         uses: actions-rs/cargo@v1
         with:
