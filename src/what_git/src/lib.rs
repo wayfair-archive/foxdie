@@ -60,7 +60,7 @@ use std::result;
 /// [`what_git::Error`]: ./enum.Error.html
 pub async fn what_git(repository: &str, token: &str) -> Result {
     let url_str = scrub_git_url_if_needed(repository);
-    let url = Url::parse(&url_str).or_else(|_| Err(Error::UnknownProvider(url_str.to_string())))?;
+    let url = Url::parse(&url_str).map_err(|_| Error::UnknownProvider(url_str.to_string()))?;
     metadata_for_url(&url, token).await
 }
 
