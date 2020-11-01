@@ -1,6 +1,6 @@
 [package]
 name = "foxdie"
-version = "0.6.0"
+version = "0.5.0"
 authors = ["Aaron Sky <asky@wayfair.com>"]
 edition = "2018"
 description = "A super-fast tool for taking stale branches and push requests and deleting and/or closing them."
