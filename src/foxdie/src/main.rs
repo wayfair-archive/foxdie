@@ -22,17 +22,17 @@ mod cli;
 mod error;
 mod services;
 
-use async_std::task;
 use cli::{build_cli, parse_shared_arguments, SharedArguments};
 use log::{error, warn};
 use std::env;
 use std::process;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     setup_logger();
     let app = build_cli();
     let app_m = app.get_matches();
-    let res = task::block_on(run_matches(&app_m));
+    let res = run_matches(&app_m).await;
     if let Err(err) = res {
         error!("{}", err);
         process::exit(1);

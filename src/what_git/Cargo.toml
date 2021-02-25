@@ -1,6 +1,6 @@
 [package]
 name = "what_git"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Aaron Sky <asky@wayfair.com>"]
 edition = "2018"
 description = "A crate for determining which SCM your Git URL is associated with."
@@ -10,4 +10,4 @@ homepage = "https://github.com/wayfair/foxdie"
 repository = "https://github.com/wayfair/foxdie"
 
 [dependencies]
-reqwest = "0.10"
+reqwest = "0.11"
