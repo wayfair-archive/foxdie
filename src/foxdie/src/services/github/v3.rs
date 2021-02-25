@@ -17,6 +17,8 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::convert::TryFrom;
+
 use super::PushRequest;
 use chrono::{DateTime, FixedOffset};
 use glob::{Pattern, PatternError};
@@ -45,9 +47,11 @@ pub struct PullRequest {
     pub base: GitData,
 }
 
-impl From<PullRequest> for PushRequest {
-    fn from(pr: PullRequest) -> Self {
-        PushRequest {
+impl TryFrom<PullRequest> for PushRequest {
+    type Error = ();
+
+    fn try_from(pr: PullRequest) -> Result<Self, Self::Error> {
+        Ok(PushRequest {
             url: pr.html_url,
             id: pr.number,
             title: pr.title,
@@ -57,7 +61,7 @@ impl From<PullRequest> for PushRequest {
             target_branch: pr.base.label,
             source_project: pr.head.repo.id,
             source_branch: pr.head.label,
-        }
+        })
     }
 }
 
@@ -87,9 +91,11 @@ pub struct ProtectedBranch {
     pub name: String,
 }
 
-impl From<ProtectedBranch> for Result<super::super::ProtectedBranch, PatternError> {
-    fn from(branch: ProtectedBranch) -> Self {
+impl TryFrom<ProtectedBranch> for super::super::ProtectedBranch {
+    type Error = PatternError;
+
+    fn try_from(branch: ProtectedBranch) -> Result<Self, Self::Error> {
         let pattern = Pattern::new(&branch.name)?;
-        Ok(super::super::ProtectedBranch { pattern })
+        Ok(Self { pattern })
     }
 }

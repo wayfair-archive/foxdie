@@ -19,6 +19,8 @@
 
 mod v3;
 
+use std::convert::TryFrom;
+
 pub(self) use self::v3::*;
 use super::{PushRequest, PushRequestState, SCMProviderImpl};
 use async_trait::async_trait;
@@ -67,22 +69,27 @@ impl GitHub {
     fn construct_base_url(&self) -> String {
         format!("{}/repos/{}/{}", self.base_url, self.owner, self.repo)
     }
-}
 
-#[async_trait]
-impl SCMProviderImpl for GitHub {
-    async fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
-        let url = format!("{}/pulls", self.construct_base_url());
+    async fn paginated_request<Query, Intermediate, Output>(
+        &self,
+        url: &str,
+        query: Query,
+    ) -> ReqwestResult<Vec<Output>>
+    where
+        Query: serde::Serialize,
+        Intermediate: serde::de::DeserializeOwned,
+        Output: TryFrom<Intermediate>,
+    {
         debug!("{}", url);
-        let query = [("state", state.github_value())];
 
         let initial_resp = self.client.get(&*url).query(&query).send().await?;
         let mut headers = initial_resp.headers().clone();
-        let pull_requests: Vec<PullRequest> = initial_resp.json().await?;
+        let page_items: Vec<Intermediate> = initial_resp.json().await?;
 
-        let mut items: Vec<PushRequest> = pull_requests
+        let mut items: Vec<Output> = page_items
             .into_iter()
-            .map(From::from)
+            .map(TryFrom::try_from)
+            .filter_map(Result::ok)
             .collect::<Vec<_>>();
         while let Some(link_header) = headers.get(header::LINK).and_then(|h| h.to_str().ok()) {
             let links = Links::parse_from_rfc5988(link_header);
@@ -91,10 +98,11 @@ impl SCMProviderImpl for GitHub {
                 let resp = self.client.get(&*next.uri).send().await?;
                 headers = resp.headers().clone();
                 let mut push_requests =
-                    resp.json().await.map(|pull_requests: Vec<PullRequest>| {
-                        pull_requests
+                    resp.json().await.map(|page_items: Vec<Intermediate>| {
+                        page_items
                             .into_iter()
-                            .map(From::from)
+                            .map(TryFrom::try_from)
+                            .filter_map(Result::ok)
                             .collect::<Vec<_>>()
                     })?;
                 items.append(&mut push_requests);
@@ -104,6 +112,17 @@ impl SCMProviderImpl for GitHub {
         }
 
         Ok(items)
+    }
+}
+
+#[async_trait]
+impl SCMProviderImpl for GitHub {
+    async fn list_push_requests(&self, state: PushRequestState) -> ReqwestResult<Vec<PushRequest>> {
+        self.paginated_request::<_, PullRequest, _>(
+            &format!("{}/pulls", self.construct_base_url()),
+            &[("state", state.github_value())],
+        )
+        .await
     }
 
     async fn close_push_request(&self, id: i32) -> ReqwestResult<()> {
@@ -119,20 +138,11 @@ impl SCMProviderImpl for GitHub {
     }
 
     async fn list_protected_branches(&self) -> ReqwestResult<Vec<super::ProtectedBranch>> {
-        let url = format!("{}/branches", self.construct_base_url());
-        let protected_branches: Vec<ProtectedBranch> = self
-            .client
-            .get(&*url)
-            .query(&[("protected", true)])
-            .send()
-            .await?
-            .json()
-            .await?;
-        Ok(protected_branches
-            .into_iter()
-            .map(From::from)
-            .filter_map(Result::ok)
-            .collect())
+        self.paginated_request::<_, ProtectedBranch, _>(
+            &format!("{}/branches", self.construct_base_url()),
+            &[("protected", true)],
+        )
+        .await
     }
 }
 
