@@ -2,7 +2,7 @@
 
 _A super-fast tool for taking stale branches and push requests and deleting and/or closing them_
 
-[![Actions Status](https://github.com/wayfair/foxdie/workflows/CI/badge.svg?branch=main)](https://github.com/wayfair/foxdie/actions)
+[![Test Status](https://github.com/wayfair/foxdie/workflows/Run%20Tests/badge.svg)](https://github.com/wayfair/foxdie/actions?query=workflow%253A%2522Run+Tests%2522)
 
 ## Setup
 

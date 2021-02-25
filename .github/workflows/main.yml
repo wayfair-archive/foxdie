@@ -1,66 +1,49 @@
-name: CI
-
+name: Run Tests
 on:
   push:
+    branches:
+      - main
     paths-ignore:
       - "**/*.md"
       - "LICENSE"
       - "**/.gitignore"
+  pull_request: ~
 
 jobs:
-  checks:
-    runs-on: ${{ matrix.os }}
+  tests:
+    name: unit tests
     strategy:
       matrix:
         os:
           - ubuntu-latest
-          - windows-latest
-          - macOS-latest
         rust-toolchain:
           - stable
           - nightly
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1.0.0
+      - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: ${{ matrix.rust-toolchain }}
           components: rustfmt, clippy
           override: true
-      - name: Rustfmt
+
+      - name: Check Formatting
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: -- --check
-      - name: Clippy
+
+      - name: Run Clippy
         continue-on-error: ${{ matrix.rust-toolchain == 'nightly' }}
         uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- -Dwarnings
-  unit_tests:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macOS-latest
-        rust-toolchain:
-          - stable
-          - nightly
-    steps:
-      - uses: actions/checkout@v1.0.0
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust-toolchain }}
-          override: true
-      - name: Build (debug)
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-      - name: Perform Unit Tests
+
+      - name: Run Tests
         uses: actions-rs/cargo@v1
         with:
           command: test
